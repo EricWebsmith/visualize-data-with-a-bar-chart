@@ -6,27 +6,8 @@ import { gdp } from './gdp';
 export default function BarChart() {
   const d3Chart = useRef();
 
-  /**
-   * 
-   * @param {string} dateString 
-   */
-  function toDecimal(dateString) {
-    switch (dateString) {
-      case '-01-01':
-        return 0;
-      case '-04-01':
-        return 0.25;
-      case '-07-01':
-        return 0.5;
-      case '-10-01':
-        return 0.75;
-      default:
-        throw new Error('wrong date "' + dateString + '"');
-    }
-  }
-
   useEffect(() => {
-    const width = 600;
+    const width = 800;
     const height = 400;
     const padding = 50;
 
@@ -42,31 +23,23 @@ export default function BarChart() {
       .attr('class', 'overlay')
       .style('opacity', 0);
 
-    // var svgContainer = d3
-    //   .select('.visHolder')
-    //   .append('svg')
-    //   .attr('width', width + 100)
-    //   .attr('height', height + 60);
-
     const svg = d3.select(d3Chart.current)
       .attr('width', width)
       .attr('height', height);
 
-    const xScale = d3.scaleLinear()
-      .domain([1947, 2016])
+    const xScale = d3.scaleTime()
+      .domain([new Date('1947-01-01'), new Date('2016-12-31')])
       .range([padding, width - padding])
 
     const yScale = d3.scaleLinear()
       .domain([18000, 0])
       .range([padding, height - padding])
 
-    const barWidth = xScale(0.25) - xScale(0);
+    const barWidth = xScale(new Date('1947-03-01')) - xScale(new Date('1947-01-01'));
     console.log('barWidth', barWidth);
 
     for (const [yearMonth, gdpValue] of gdp.data) {
-      const year = parseInt(yearMonth.substring(0, 4));
-      const decimal = toDecimal(yearMonth.substring(4));
-      const xDomain = year + decimal;
+      const xDomain = new Date(yearMonth);
       const x = xScale(xDomain);
       const y = yScale(gdpValue)
       const barHeight = 350 - yScale(gdpValue)
@@ -84,12 +57,11 @@ export default function BarChart() {
         .on('mouseover', function (event, d) {
           // d or datum is the height of the
           // current rect
-          var i = this.getAttribute('index');
 
           overlay
             .transition()
             .duration(0)
-            .style('height', d + 'px')
+            .style('height', barHeight + 'px')
             .style('width', barWidth + 'px')
             .style('opacity', 0.9)
             .style('left', x + 0 + 'px')
@@ -115,7 +87,7 @@ export default function BarChart() {
         });
     }
 
-    const xAxis = d3.axisBottom().scale(xScale);
+    const xAxis = d3.axisBottom(xScale);
     svg
       .append('g')
       .attr('id', 'x-axis')
@@ -129,15 +101,25 @@ export default function BarChart() {
       .attr('transform', `translate(${padding}, 0)`)
       .call(yAxis);
 
+    svg
+      .append('text')
+      .attr('transform', 'rotate(-90)')
+      .attr('x', -200)
+      .attr('y', 80)
+      .text('Gross Domestic Product');
+
   }, []);
 
 
   return (
     <>
-      <div id='d3demo'>
-        <h1>United States GDP</h1>
-        <div className="visHolder">
-          <svg ref={d3Chart}></svg>
+      <div className='main'>
+        <div className="container">
+          <h1>United States GDP</h1>
+          <div className="visHolder">
+            <svg ref={d3Chart}></svg>
+          </div>
+
         </div>
 
       </div>
